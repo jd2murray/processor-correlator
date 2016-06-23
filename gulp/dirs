@@ -1,0 +1,5 @@
+//const argv = require('yargs').argv;
+
+gen = './generated';
+srcDir = './src';
+babelOut = gen + '/public';
