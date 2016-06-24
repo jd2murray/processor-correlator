@@ -2,7 +2,7 @@ require('./dirs');
 const gulp = require('gulp');
 const babel = require('gulp-babel');
 
-let babelSrc = [srcDir + '/**.js'];
+let babelSrc = [srcDir + '/**/*.js'];
 gulp.task('babel', () => {
    return(gulp.src(babelSrc)
            .pipe(babel({
