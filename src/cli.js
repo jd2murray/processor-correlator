@@ -2,12 +2,17 @@ var program = require('commander');
 let fse = require('fs-extra');
 let pkg = JSON.parse(fse.readFileSync('package.json', 'utf8'));
 let xWriter = require('xml-writer');
-import ieoGen from './ieoGen';
-import Image from './image';
-import Projection from './wgs84Projection';
-import Camera from './camera';
-import ScriptGenerator from './c3dScript/scriptGenerator';
-import BlockAT from './c3dScript/blockAT';
+import ieoGen from './initialIEO/ieoGen';
+import Image from './initialIEO/image';
+import Projection from './initialIEO/wgs84Projection';
+import Camera from './initialIEO/camera';
+import ScriptGenerator from './scriptGen/scriptGenerator';
+import FileUtils from './fileUtils';
+import BlockAT from './scriptGen/blockAT';
+import BlockDSM from './scriptGen/blockDSM';
+import BlockDTM from './scriptGen/blockDTM';
+import BlockOrthos from './scriptGen/blockOrthoRectification';
+import BlockMosaic from './scriptGen/blockMosaic';
 
 let path = require('path');
 
@@ -83,42 +88,43 @@ ieo.generate(xw);
 xw.endDocument();
 
 
-function ensureExistsDir(path) {
-    try {
-        fse.mkdirSync(path, 0o777)
-    } catch (err) {
-        if (err.code != 'EEXIST') { // ignore the error if the folder already exists
-            errExit(new Error('Error creating/ensuring directory exists: ' + err.message));
-        }
-    }
-}
-
-function ensureNotExistsFile(path) {
-    try {
-        fse.unlinkSync(path)
-    }
-    catch (e) {
-        //Nothing - assume failure is because the file didn't exist in the first place.
-    }
-}
-
 //Ensure the directory for IEO exists...
-ensureExistsDir(outputPath);
-ensureExistsDir(outputPath + '\\IEO');
-ensureExistsDir(outputPath + '\\IEO' + '\\Initial');
+FileUtils.ensureExistsDir(outputPath, errExit);
+FileUtils.ensureExistsDir(outputPath + '\\IEO', errExit);
+FileUtils.ensureExistsDir(outputPath + '\\IEO' + '\\Initial', errExit);
 
+//Generate the IEO
 let ieoName = outputPath + '\\IEO\\Initial\\Initial.ieo';
-ensureNotExistsFile(ieoName);
+FileUtils.ensureNotExistsFile(ieoName);
 fse.appendFileSync(ieoName, xw.toString());
 
-
-//Assemple and write the AT script.
-let AT = new BlockAT(outputPath);
+//Assemble and write the AT script.
+let scriptName = outputPath + '\\ATScript.spt';
+FileUtils.ensureNotExistsFile(scriptName);
 let scriptGen = new ScriptGenerator();
 
+let AT = new BlockAT(outputPath);
 scriptGen.addBlockGenerator(AT.generator);
-let scriptName = outputPath + '\\script.spt';
-ensureNotExistsFile(scriptName);
+
 fse.appendFileSync(scriptName, scriptGen.generateScript());
+
+
+//Assemble and write the finish script.
+scriptName = outputPath + '\\FinishScript.spt';
+FileUtils.ensureNotExistsFile(scriptName);
+scriptGen = new ScriptGenerator();
+
+let DSM = new BlockDSM(outputPath);
+scriptGen.addBlockGenerator(DSM.generator);
+let DTM = new BlockDTM(outputPath);
+scriptGen.addBlockGenerator(DTM.generator);
+let Orthos = new BlockOrthos(outputPath);
+scriptGen.addBlockGenerator(Orthos.generator);
+let Mosaic = new BlockMosaic(outputPath);
+scriptGen.addBlockGenerator(Mosaic.generator);
+
+fse.appendFileSync(scriptName, scriptGen.generateScript());
+
+
 
 console.log('Finished!');

@@ -1,20 +1,9 @@
 import Generator from './blockGenerator';
+import IEOName from './ieoName';
+
 let path = require('path');
 
-//<AerialTriangulation>
-//    {
-//        TiePointExtraction On
-//	ExtractionType	   Standard
-//	CameraCalibration  Unconstrained
-//	EOAdjustment       UnconstrainedAT
-//	InputEO            E:\Correlator3dWork\DataSetBenjamin642\Correlator3D\IEO\Initial\Initial.ieo
-//	ATFolder           E:\Correlator3dWork\DataSetBenjamin642\Correlator3D\AT\
-//	OutputDEM		   E:\Correlator3dWork\DataSetBenjamin642\Correlator3D\DEM\SeedDEM.asc
-//}
-
 const BLOCK_NAME = 'AerialTriangulation';
-
-
 
 class BlockAT {
     _rootFolder: string;
@@ -22,14 +11,13 @@ class BlockAT {
     constructor(rootFolder : string) {
         this._rootFolder = rootFolder;
     }
-    
-    findLatestIEO() : string {
-        //TODO: scan the directory for initial, Step_1, Step_2, etc. to find the latest and use it.
-        return this._rootFolder + '\\IEO\\Initial\\Initial.ieo';
+
+    static seedDEMFileName(rootFolder : string) {
+        return rootFolder + '\\DEM\\SeedDEM.asc';
     }
     
     get generator() : Generator {
-        let eoPath = this.findLatestIEO(); 
+        let eoPath = IEOName.getLatest(this._rootFolder);
         let eoFilename = path.parse(eoPath).base;
         
         //Only calculate tie points if this is the initial run (not a bundle adjustment)
@@ -47,7 +35,7 @@ class BlockAT {
             EOAdjustment: 'UnconstrainedAT',
             InputEO: eoFilename,
             ATFolder: this._rootFolder + '\\AT\\',
-            OutputDEM: this._rootFolder + '\\DEM\\SeedDEM.asc'
+            OutputDEM: BlockAT.seedDEMFileName(this._rootFolder)
         });
     }
     
