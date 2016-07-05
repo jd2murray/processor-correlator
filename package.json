@@ -16,5 +16,9 @@
     "npm": "^3.9.5",
     "proj4": "^2.3.14",
     "xml-writer": "^1.6.0"
+  },
+  "dependencies": {
+    "express": "^4.14.0",
+    "log4js": "^0.6.37"
   }
 }

@@ -1,6 +1,6 @@
 import BlockGenerator from './blockGenerator';
 
-class ScriptGenerator {
+class Script {
     _generators: Array<BlockGenerator>;
     
     constructor() {
@@ -21,4 +21,4 @@ class ScriptGenerator {
     }
 }
 
-export default ScriptGenerator;
+export default Script;
