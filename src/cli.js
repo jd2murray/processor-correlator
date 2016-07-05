@@ -1,5 +1,6 @@
-import Dataset from './dataset';
+import Dataset from './dataset/dataset';
 import Camera from './initialIEO/camera';
+import {DatasetStateType, ProcessingStateType} from './dataset/state';
 
 var program = require('commander');
 let fse = require('fs-extra');
@@ -39,7 +40,9 @@ let dataset = new Dataset(program.directory, program.output, new Camera({
     pixelSize: 2.4
 }));
 
-let success = dataset.initialize();
+dataset.initialize();
+let success = dataset.state.processingState != ProcessingStateType.ERROR;
+
 if(success) {
     dataset.triangulate();
     dataset.generateDSMDTM();

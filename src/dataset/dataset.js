@@ -1,38 +1,56 @@
-import ieoGen from './initialIEO/ieoGen';
-import Image from './initialIEO/image';
-import Projection from './initialIEO/wgs84Projection';
-import Camera from './initialIEO/camera';
-import Script from './script/script';
-import FileUtils from './fileUtils';
-import BlockAT from './script/blockAT';
-import BlockDSM from './script/blockDSM';
-import BlockDTM from './script/blockDTM';
-import BlockOrthos from './script/blockOrthoRectification';
-import BlockMosaic from './script/blockMosaic';
+import ieoGen from '../initialIEO/ieoGen';
+import Image from '../initialIEO/image';
+import Projection from '../initialIEO/wgs84Projection';
+import Camera from '../initialIEO/camera';
+import Script from '../script/script';
+import FileUtils from '../fileUtils';
+import BlockAT from '../script/blockAT';
+import BlockDSM from '../script/blockDSM';
+import BlockDTM from '../script/blockDTM';
+import BlockOrthos from '../script/blockOrthoRectification';
+import BlockMosaic from '../script/blockMosaic';
+import type {DatasetStateType, ProcessingStateType} from './state';
+import {ProcessingState} from './state';
+
 let fse = require('fs-extra');
 let xWriter = require('xml-writer');
 let path = require('path');
 
 const _logger = require ( 'log4js' ).getLogger ( path.basename ( __filename ) );
 
+
 class Dataset {
     _inputDir : string;
     _camera : Camera;
     _workingDir : string;
+    _state : DatasetStateType;
     
     constructor (inputDir : string, workingDir: string, camera: Camera) {
         this._camera = camera;
         this._inputDir = inputDir;
         this._workingDir = workingDir;
+        this._state = {
+            processingState : ProcessingState.IDLE,
+            demAvailable : false
+        };
     }
     
-    initialize() : boolean {
+    get state() : DatasetStateType {
+        return this._state;
+    }
+    
+    download() {
+
+    }
+    
+    initialize() : void {
         let dirFiles;
         try {
             dirFiles = fse.readdirSync(this._inputDir);
         } catch (err) {
             _logger.error('Error reading directory: ' + this._inputDir + '. err: ' + err);
-            return false;
+            this._state.processingState = ProcessingState.ERROR;
+            return;
         }
 
         let images : Array<image> = [];
@@ -70,6 +88,8 @@ class Dataset {
         let errExit = (err : string) => {
             _logger.error("Error: " + err);
             success = false;
+            this._state.processingState = ProcessingState.ERROR;
+
         };
 
         //Ensure the directory for IEO exists...
@@ -83,8 +103,6 @@ class Dataset {
             FileUtils.ensureNotExistsFile(ieoName);
             fse.appendFileSync(ieoName, xw.toString());
         }
-        
-        return success;
     }
     
     triangulate() {
