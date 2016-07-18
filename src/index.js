@@ -1,7 +1,6 @@
-import './setNodeDir';
-import 'babel-polyfill';
 import Version from './routes/version';
 import Time from './routes/time';
+import Dataset from './routes/dataset';
 
 var express = require('express');
 var app = express();
@@ -19,11 +18,18 @@ if(port === undefined) {
     port = DEFAULT_PORT;
 }
 
-let DEFAULT_DATA_DIR = './data';
+let DEFAULT_DATA_DIR = 'e:\\Projects\\Correlator\\generated\\correlatorWork';
 var baseDataDir = process.env.CORRELATOR_DATA_DIR;
 if(baseDataDir === undefined) {
     _logger.warn('No CORRELATOR_DATA_DIR set, defaulting to: ' + DEFAULT_DATA_DIR);
     baseDataDir = DEFAULT_DATA_DIR;
+}
+
+let DEFAULT_C3D_PATH = 'e:\\Correlator3D\c\C3d.exe';
+var C3DPath = process.env.CORRELATOR_EXE_PATH;
+if(C3DPath === undefined) {
+    _logger.warn('No CORRELATOR_EXE_PATH set, defaulting to: ' + DEFAULT_C3D_PATH);
+    C3DPath = DEFAULT_C3D_PATH;
 }
 
 //Allow cross-origin for all requests.
@@ -36,8 +42,8 @@ app.use(function(req, res, next) {
 //Let express know that we'll sit behind a proxy in production.
 app.enable('trust proxy');
 
-
 let routes = {
+    dataset: new Dataset(app, baseDataDir, C3DPath),
     version: new Version(app),
     time: new Time(app)
 };

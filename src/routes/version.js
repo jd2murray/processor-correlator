@@ -1,11 +1,11 @@
-import Express from 'express';
+let path = require('path');
 
 const _logger = require ( 'log4js' ).getLogger ( path.basename ( __filename ) );
 
-var version  = require( '../../package').version;
+var version  = require( '../../../package').version;
 
 class Version {
-    constructor (app : Express) {
+    constructor (app : Object) {
         //Serve the version version.
         app.get('/version', function(req, res) {
             var ret = {'cs-correlator-version': version};

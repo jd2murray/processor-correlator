@@ -17,6 +17,7 @@ program
     .version(pkg.version)
     .option('-d, --directory <directory>', 'Directory which contains the images')
     .option('-o, --output <output>', 'Output directory')
+    .option('-c, --C3DPath <C3DPath>')
     .parse(process.argv);
 
 let outputPath = '';
@@ -32,7 +33,12 @@ if(!program.output ||
     errExit('Error - invalid invocation. Please check parameters.');
 }
 
-let dataset = new Dataset(program.directory, program.output, new Camera({
+if(!program.C3DPath ||
+    program.C3DPath === '') {
+    errExit('Error - invalid invocation. Please check parameters.');
+}
+
+let dataset = new Dataset(program.directory, program.output, program.C3DPath, new Camera({
     name: 'CLICamera',
     imageWidth: 20,
     imageHeight: 50,
@@ -45,10 +51,8 @@ let success = dataset.state.processingState != ProcessingStateType.ERROR;
 
 if(success) {
     dataset.triangulate();
-    dataset.generateDSMDTM();
-    dataset.generateMosaic();
+    //dataset.generateDSMDTM();
+    //dataset.generateMosaic();
 }
-
-
 
 console.log('Finished!');

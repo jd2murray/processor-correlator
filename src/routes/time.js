@@ -1,9 +1,9 @@
-import Express from 'express';
+let path = require('path');
 
 const _logger = require ( 'log4js' ).getLogger ( path.basename ( __filename ) );
 
 class Time {
-    constructor (app : Express) {
+    constructor (app : Object) {
         //Serve a server time
         app.get('/serverTime', function(req, res) {
             var ret = {serverTime: new Date().getTime()};

@@ -10,8 +10,10 @@ import BlockDTM from '../script/blockDTM';
 import BlockOrthos from '../script/blockOrthoRectification';
 import BlockMosaic from '../script/blockMosaic';
 import type {DatasetStateType, ProcessingStateType} from './state';
+
 import {ProcessingState} from './state';
 
+let ChildProcess = require('child_process').spawn;
 let fse = require('fs-extra');
 let xWriter = require('xml-writer');
 let path = require('path');
@@ -21,14 +23,18 @@ const _logger = require ( 'log4js' ).getLogger ( path.basename ( __filename ) );
 
 class Dataset {
     _inputDir : string;
+    _C3DPath : string;
     _camera : Camera;
     _workingDir : string;
     _state : DatasetStateType;
+    _worker : ?ChildProcess;
     
-    constructor (inputDir : string, workingDir: string, camera: Camera) {
+    constructor (inputDir : string, workingDir: string, C3DPath: string, camera: Camera) {
         this._camera = camera;
         this._inputDir = inputDir;
         this._workingDir = workingDir;
+        this._C3DPath = C3DPath;
+        this._worker = null;
         this._state = {
             processingState : ProcessingState.IDLE,
             demAvailable : false
@@ -85,11 +91,10 @@ class Dataset {
         xw.endDocument();
 
         let success = true;
-        let errExit = (err : string) => {
-            _logger.error("Error: " + err);
+        let errExit = (err : Error) => {
+            _logger.error("Error: " + err.message);
             success = false;
             this._state.processingState = ProcessingState.ERROR;
-
         };
 
         //Ensure the directory for IEO exists...
@@ -104,6 +109,48 @@ class Dataset {
             fse.appendFileSync(ieoName, xw.toString());
         }
     }
+
+    _scriptError(error : Error) {
+        //Interesting that this is called when running under service and not when running cli...perhaps C3D detects
+        //whether or not there is a window attached to process or not and decides to thwor errors/etc. only if there is.
+        //This could be good for us - no need to detect popups/etc. as correlator may be well behaved.
+        this._state.processingState = ProcessingState.ERROR;
+    }
+
+    _scriptSOutData(data : ?string) {
+        _logger.info(data);
+    }
+
+    _scriptSErrData(data : ?string) {
+        _logger.warn(data);
+
+    }
+
+    _scriptDone(code : number) {
+        _logger.info(code);
+        //this._state.processingState = ProcessingState.IDLE;
+    }
+
+    _launchScript(scriptName: string) {
+        //TODO: We need to detect script crashes and 'popup' messages and kill /end the process cleanly...
+        //TODO: ChildProcess does have a method '.kill' which can be used to end the process, but when to invoke it?
+
+        //Run correlator with:
+        //   - verbose mode (/v)
+        //   - showing percentage progress (/p)
+        //   - Sending log information to scriptLog.txt (/r)
+        //   - with our script as control (/f)
+        this._worker = new ChildProcess(
+            this._C3DPath,
+            ['/v', '/p', '/r', this._workingDir + '\\scriptLog.txt', '/f', scriptName],
+            {
+                cwd: this._workingDir
+            });
+        this._worker.stdout.on('data', this._scriptSOutData.bind(this));
+        this._worker.stderr.on('data', this._scriptSErrData.bind(this));
+        this._worker.on('close', this._scriptDone.bind(this));
+        this._worker.on('error', this._scriptError.bind(this));
+    }
     
     triangulate() {
         //Assemble and write the AT script.
@@ -115,6 +162,9 @@ class Dataset {
         script.addBlockGenerator(at.generator);
 
         fse.appendFileSync(scriptName, script.generateScript());
+        
+        this._state.processingState = ProcessingState.TRIANGULATING;
+        this._launchScript(scriptName);
     }
 
     generateDSMDTM() {
@@ -128,6 +178,8 @@ class Dataset {
         script.addBlockGenerator(dtm.generator);
 
         fse.appendFileSync(scriptName, script.generateScript());
+        this._state.processingState = ProcessingState.GENERATING_DEM;
+        this._launchScript(scriptName);
     }
     
     generateMosaic() {
@@ -141,8 +193,9 @@ class Dataset {
         script.addBlockGenerator(mosaic.generator);
 
         fse.appendFileSync(scriptName, script.generateScript());
+        this._state.processingState = ProcessingState.GENERATING_MOSAIC;
+        this._launchScript(scriptName);
     }
-    
 }
 
 export default Dataset;
