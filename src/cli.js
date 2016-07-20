@@ -40,8 +40,8 @@ if(!program.C3DPath ||
 
 let dataset = new Dataset(program.directory, program.output, program.C3DPath, new Camera({
     name: 'CLICamera',
-    imageWidth: 20,
-    imageHeight: 50,
+    imageWidth: 1920,
+    imageHeight: 1080,
     focalLength: 2.2,
     pixelSize: 2.4
 }));

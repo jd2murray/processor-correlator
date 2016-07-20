@@ -86,7 +86,7 @@ class ieoGen {
             .endElement()
             .startElement('PrincipalPoint')
             .writeAttribute('Xmm', '0')
-            .writeAttribute('Ymm', '0;')
+            .writeAttribute('Ymm', '0')
             .endElement()
             .startElement('PixelSize')
             .text(this._camera.pixelSize)

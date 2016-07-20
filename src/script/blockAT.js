@@ -33,7 +33,7 @@ class BlockAT {
             ExtractionType: 'Standard',
             CameraCalibration: 'Unconstrained',
             EOAdjustment: 'UnconstrainedAT',
-            InputEO: eoFilename,
+            InputEO: eoPath,
             ATFolder: this._rootFolder + '\\AT\\',
             OutputDEM: BlockAT.seedDEMFileName(this._rootFolder)
         });

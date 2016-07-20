@@ -37,7 +37,8 @@ class Dataset {
         this._worker = null;
         this._state = {
             processingState : ProcessingState.IDLE,
-            demAvailable : false
+            demAvailable : false,
+            latestStatus : ''
         };
     }
     
@@ -117,18 +118,25 @@ class Dataset {
         this._state.processingState = ProcessingState.ERROR;
     }
 
-    _scriptSOutData(data : ?string) {
-        _logger.info(data);
+    _scriptSOutData(data : Buffer) {
+        let str = data.toString();
+        _logger.info(str);
+        this._state.latestStatus = str;
     }
 
-    _scriptSErrData(data : ?string) {
-        _logger.warn(data);
-
+    _scriptSErrData(data : Buffer) {
+        let str = data.toString();
+        _logger.warn(str);
+        this._state.latestStatus = str;
     }
 
     _scriptDone(code : number) {
         _logger.info(code);
-        //this._state.processingState = ProcessingState.IDLE;
+        if(code != 0) {
+            this._state.processingState = ProcessingState.ERROR;
+        } else {
+            this._state.processingState = ProcessingState.IDLE;
+        }
     }
 
     _launchScript(scriptName: string) {

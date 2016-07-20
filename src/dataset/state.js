@@ -13,7 +13,8 @@ export {ProcessingState};
 
 export type DatasetStateType = {
     processingState : ProcessingStateType,
-    demAvailable : boolean
+    demAvailable : boolean,
+    latestStatus : string
 }
 
 export default ProcessingState;

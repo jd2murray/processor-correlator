@@ -25,7 +25,7 @@ if(baseDataDir === undefined) {
     baseDataDir = DEFAULT_DATA_DIR;
 }
 
-let DEFAULT_C3D_PATH = 'e:\\Correlator3D\c\C3d.exe';
+let DEFAULT_C3D_PATH = 'e:\\Correlator3D\\C3d.exe';
 var C3DPath = process.env.CORRELATOR_EXE_PATH;
 if(C3DPath === undefined) {
     _logger.warn('No CORRELATOR_EXE_PATH set, defaulting to: ' + DEFAULT_C3D_PATH);
